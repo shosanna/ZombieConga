@@ -46,7 +46,9 @@ class GameScene: SKScene {
         
         lastUpdateTime = currentTime
         
-        moveSprite(zombie, velocity: CGPoint(x: zombieMovePointsPerSec, y: 0))
+        moveSprite(zombie, velocity: velocity)
+        boundsCheckZombie()
+        rotateSprite(zombie, direction: velocity)
     }
     
     // This function calculates the right amount of steps for each frame
@@ -57,8 +59,59 @@ class GameScene: SKScene {
         sprite.position = CGPoint(x: sprite.position.x + amountToMove.x, y: sprite.position.y + amountToMove.y)
     }
     
+    // Only calculates the right velocity
     func moveZombieToward(location: CGPoint) {
         let offset = CGPoint(x: location.x - zombie.position.x, y: location.y - zombie.position.y)
+        let length = sqrt(Double(offset.x * offset.x + offset.y * offset.y))
+        let direction = CGPoint(x: offset.x / CGFloat(length), y: offset.y / CGFloat(length))
+        velocity = CGPoint(x: direction.x * zombieMovePointsPerSec, y: direction.y * zombieMovePointsPerSec)
+    }
+    
+    func sceneTouched(touchLocation: CGPoint) {
+        moveZombieToward(touchLocation)
+    }
+    
+    override func touchesBegan(touches: NSSet, withEvent event: UIEvent) {
+        let touch = touches.anyObject() as UITouch
+        let touchLocation = touch.locationInNode(self)
         
+        sceneTouched(touchLocation)
+    }
+    
+    override func touchesMoved(touches: NSSet, withEvent event: UIEvent) {
+        let touch = touches.anyObject() as UITouch
+        let touchLocation = touch.locationInNode(self)
+        
+        sceneTouched(touchLocation)
+    }
+    
+    // Check if zombie is not outside the playable area and if he is, change his direction
+    func boundsCheckZombie() {
+        let bottomLeft = CGPointZero
+        let topRight = CGPoint(x: size.width, y: size.height)
+        
+        if zombie.position.x <= bottomLeft.x {
+            zombie.position.x = bottomLeft.x
+            velocity.x = -velocity.x
+        }
+        
+        if zombie.position.x >= topRight.x {
+            zombie.position.x = topRight.x
+            velocity.x = -velocity.x
+        }
+        
+        if zombie.position.y <= bottomLeft.y {
+            zombie.position.y = bottomLeft.y
+            velocity.y = -velocity.y
+        }
+        
+        if zombie.position.y >= topRight.y {
+            zombie.position.y = topRight.y
+            velocity.y = -velocity.y
+        }
+    }
+    
+    func rotateSprite(sprite: SKSpriteNode, direction: CGPoint) {
+        sprite.zRotation = CGFloat(atan2(Double(direction.y), Double(direction.x)))
     }
 }
